@@ -15,6 +15,7 @@ $.noConflict();
 			this.shippingRates = this.cartPrefix + "shipping-rates"; // Shipping rates key in the session storage
 			this.total = this.cartPrefix + "total"; // Total key in the session storage
 			this.storage = sessionStorage; // shortcut to the sessionStorage object
+			this.jQuerycheckoutBtn = this.jQueryelement.find("#shopping-cart-actions a[href='checkout.html']");
 			
 			
 			this.jQueryformAddToCart = this.jQueryelement.find( "form.add-to-cart" ); // Forms for adding items to the cart
@@ -59,7 +60,14 @@ $.noConflict();
 			this.deleteProduct();
 			this.displayUserDetails();
 			this.populatePayPalForm();
-			
+			var self = this;
+         this.jQuerycheckoutBtn.on("click", function(e) {
+        var cart = self._toJSONObject(self.storage.getItem(self.cartName));
+        if (cart.items.length === 0) {
+            e.preventDefault();
+            alert("Your cart is empty. Add items before checkout.");
+        }
+    });
 			
 		},
 		
@@ -319,44 +327,85 @@ $.noConflict();
 		// Updates the cart
 		
 		updateCart: function() {
-			var self = this;
-		  if( self.jQueryupdateCartBtn.length ) {
-			self.jQueryupdateCartBtn.on( "click", function() {
-				var jQueryrows = self.jQueryformCart.find( "tbody tr" );
-				var cart = self.storage.getItem( self.cartName );
-				var shippingRates = self.storage.getItem( self.shippingRates );
-				var total = self.storage.getItem( self.total );
+		// 	var self = this;
+		//   if( self.jQueryupdateCartBtn.length ) {
+		// 	self.jQueryupdateCartBtn.on( "click", function() {
+		// 		var jQueryrows = self.jQueryformCart.find( "tbody tr" );
+		// 		var cart = self.storage.getItem( self.cartName );
+		// 		var shippingRates = self.storage.getItem( self.shippingRates );
+		// 		var total = self.storage.getItem( self.total );
 				
-				var updatedTotal = 0;
-				var totalQty = 0;
-				var updatedCart = {};
-				updatedCart.items = [];
+		// 		var updatedTotal = 0;
+		// 		var totalQty = 0;
+		// 		var updatedCart = {};
+		// 		updatedCart.items = [];
 				
-				jQueryrows.each(function() {
-					var jQueryrow = jQuery( this );
-					var pname = jQuery.trim( jQueryrow.find( ".pname" ).text() );
-					var pqty = self._convertString( jQueryrow.find( ".pqty > .qty" ).val() );
-					var pprice = self._convertString( self._extractPrice( jQueryrow.find( ".pprice" ) ) );
+		// 		jQueryrows.each(function() {
+		// 			var jQueryrow = jQuery( this );
+		// 			var pname = jQuery.trim( jQueryrow.find( ".pname" ).text() );
+		// 			var pqty = self._convertString( jQueryrow.find( ".pqty > .qty" ).val() );
+		// 			var pprice = self._convertString( self._extractPrice( jQueryrow.find( ".pprice" ) ) );
 					
-					var cartObj = {
-						product: pname,
-						price: pprice,
-						qty: pqty
-					};
+		// 			var cartObj = {
+		// 				product: pname,
+		// 				price: pprice,
+		// 				qty: pqty
+		// 			};
 					
-					updatedCart.items.push( cartObj );
+		// 			updatedCart.items.push( cartObj );
 					
-					var subTotal = pqty * pprice;
-					updatedTotal += subTotal;
-					totalQty += pqty;
-				});
+		// 			var subTotal = pqty * pprice;
+		// 			updatedTotal += subTotal;
+		// 			totalQty += pqty;
+		// 		});
 				
-				self.storage.setItem( self.total, self._convertNumber( updatedTotal ) );
-				self.storage.setItem( self.shippingRates, self._convertNumber( self._calculateShipping( totalQty ) ) );
-				self.storage.setItem( self.cartName, self._toJSONString( updatedCart ) );
+		// 		self.storage.setItem( self.total, self._convertNumber( updatedTotal ) );
+		// 		self.storage.setItem( self.shippingRates, self._convertNumber( self._calculateShipping( totalQty ) ) );
+		// 		self.storage.setItem( self.cartName, self._toJSONString( updatedCart ) );
 				
-			});
-		  }
+		// 	});
+		//   }
+		var self = this;
+    if (self.jQueryupdateCartBtn.length) {
+        self.jQueryupdateCartBtn.on("click", function() {
+            // ⬇️ NEW: Prevent zero‑quantity entries
+            var hasZero = false;
+            self.jQueryformCart.find(".pqty .qty").each(function() {
+                if (parseInt(this.value, 10) === 0) {
+                    hasZero = true;
+                    return false;   // break .each()
+                }
+            });
+            if (hasZero) {
+                alert("Quantity cannot be zero. Remove the item or enter at least one product.");
+                return;           // abort updating
+            }
+
+            // ——— existing code follows ———
+            var jQueryrows     = self.jQueryformCart.find("tbody tr");
+            var updatedTotal   = 0;
+            var totalQty       = 0;
+            var updatedCart    = { items: [] };
+
+            jQueryrows.each(function() {
+                var jQueryrow = jQuery(this);
+                var pname     = jQuery.trim(jQueryrow.find(".pname").text());
+                var pqty      = self._convertString(jQueryrow.find(".pqty .qty").val());
+                var pprice    = self._convertString(self._extractPrice(jQueryrow.find(".pprice")));
+
+                updatedCart.items.push({ product: pname, price: pprice, qty: pqty });
+                updatedTotal += pqty * pprice;
+                totalQty     += pqty;
+            });
+
+            self.storage.setItem(self.total, self._convertNumber(updatedTotal));
+            self.storage.setItem(
+              self.shippingRates,
+              self._convertNumber(self._calculateShipping(totalQty))
+            );
+            self.storage.setItem(self.cartName, self._toJSONString(updatedCart));
+        });
+    }
 		},
 		
 		// Adds items to the shopping cart

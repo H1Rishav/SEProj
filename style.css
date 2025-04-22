@@ -52,7 +52,7 @@ html {
 
 /* Style the "active" element to highlight the current page */
 .topnav a.active {
-  background-color: #15c93c;
+  background-color: #000000;
   
 }
 
@@ -100,7 +100,7 @@ html {
 
 .navbar
 {
-	background-color: #15c93c;
+	background-color: black;
 	margin-bottom: 0px;
 	
 }
@@ -152,7 +152,7 @@ html {
 /*---on sale---*/
 .title-box
 {
-	background: #15c93c;
+	background: #000000;
 	color: #fff;
 	width: 180px;
 	padding: 4px 10px;
@@ -171,7 +171,7 @@ html {
 .title-box::after
 {
 	content: '';
-	border-top: 40px #15c93c;
+	border-top: 40px black;
 	border-right: 50px solid transparent;
 	position: absolute;
 	display: flex;
